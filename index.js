@@ -1,5 +1,7 @@
 import readline from "readline";
-import { spawn } from "child_process";
+import fs from "fs";
+import os from "os";
+import { exec, spawn } from "child_process";
 
 const outputData = (output) => {
   process.stdout.write(
@@ -17,7 +19,27 @@ const parseInput = (inputs) => {
       break;
     case "cd":
       commands.cd(args.slice(1));
+    case "pwd":
+      commands.pwd();
+      break;
+    case "ls":
+      commands.ls(args.slice(1).join(" "));
+      break;
+    case "cat":
+      commands.cat(args.slice(1).join(" "));
+      break;
+    case "nano":
+      commands.nano(args.slice(1).join(" "));
+      break;
+    case "code":
+      commands.code(args.slice(1).join(" "));
+      break;
     default:
+      if (cmd.length == 0) {
+        process.stdout.write(
+          `\x1b[30m\x1b[36m${process.cwd()} \x1b[32mTerminal> \x1b[0m`
+        );
+      }
       break;
   }
 };
@@ -32,6 +54,74 @@ const commands = {
       outputData("Directory changed");
     } catch (err) {
       outputData(err.msg);
+    }
+  },
+  pwd: () => {
+    outputData(process.cwd());
+  },
+  ls: (folderPath) => {
+    if (folderPath.length == 0) {
+      folderPath = process.cwd();
+    }
+    fs.readdir(folderPath, (err, files) => {
+      if (err) {
+        outputData(err.message);
+      } else {
+        files.forEach((file) => {
+          process.stdout.write(`${file}  `);
+        });
+        outputData("");
+      }
+    });
+  },
+  cat: (filename) => {
+    // const child = spawn("cat", [filename]);
+    // child.stdout.on("data", (data) => {
+    //   console.log(data.toString());
+    // });
+    try {
+      const data = fs.readFileSync(filename);
+      console.log(data.toString());
+      outputData("");
+    } catch (err) {
+      console.log(`Got an error trying to read the file ${err.message}`);
+      outputData("");
+    }
+  },
+  // nano: (filename) => {
+  //   try {
+  //     fs.writeFileSync(filename);
+  //   } catch (err) {
+  //     console.log(`Got an error trying to write the file ${err.message}`);
+  //     outputData("");
+  //   }
+  // },
+  code: (path) => {
+    try {
+      let vscodePath = "";
+      if (os.platform() == "linux") {
+        const command = spawn("which", ["code"]);
+        command.stdout.on("data", (data) => {
+          vscodePath = data.toString().trim();
+          const code = spawn(vscodePath, [path]);
+          console.log(command.pid);
+          console.log(code.pid);
+          outputData("");
+        });
+      }
+
+      if (os.platform() == "win32") {
+        const command = spawn("where", ["code"]);
+        command.stdout.on("data", (data) => {
+          vscodePath = data.toString().trim();
+          const code = spawn(vscodePath, [path]);
+          console.log(command.pid);
+          console.log(code.pid);
+          outputData("");
+        });
+      }
+    } catch (error) {
+      console.log(error);
     }
   },
 };
