@@ -2,6 +2,7 @@ import readline from "readline";
 import fs from "fs";
 import os from "os";
 import { exec, spawn } from "child_process";
+import path from "path";
 
 const outputData = (output) => {
   process.stdout.write(
@@ -33,6 +34,9 @@ const parseInput = (inputs) => {
       break;
     case "code":
       commands.code(args.slice(1).join(" "));
+      break;
+    case "mkdir":
+      commands.mkdir(args.slice(1).join(" "));
       break;
     default:
       if (cmd.length == 0) {
@@ -99,17 +103,6 @@ const commands = {
   code: (path) => {
     try {
       let vscodePath = "";
-      if (os.platform() == "linux") {
-        const command = spawn("which", ["code"]);
-        command.stdout.on("data", (data) => {
-          vscodePath = data.toString().trim();
-          const code = spawn(vscodePath, [path]);
-          console.log(command.pid);
-          console.log(code.pid);
-          outputData("");
-        });
-      }
-
       if (os.platform() == "win32") {
         const command = spawn("where", ["code"]);
         command.stdout.on("data", (data) => {
@@ -120,8 +113,31 @@ const commands = {
           outputData("");
         });
       }
+      if (os.platform() == "linux") {
+        const command = spawn("which", ["code"]);
+        command.stdout.on("data", (data) => {
+          vscodePath = data.toString().trim();
+          const code = spawn(vscodePath, [path]);
+          console.log(command.pid);
+          console.log(code.pid);
+          outputData("");
+        });
+      }
     } catch (error) {
       console.log(error);
+    }
+  },
+
+  mkdir: (foldername) => {
+    try {
+      fs.mkdir(path.join(path.dirname(""), foldername), (err) => {
+        if (err) return console.error(err);
+      });
+      console.log("Directory created successfully");
+      outputData("");
+    } catch (error) {
+      console.log(error);
+      outputData("");
     }
   },
 };
