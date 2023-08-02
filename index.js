@@ -38,6 +38,9 @@ const parseInput = (inputs) => {
     case "mkdir":
       commands.mkdir(args.slice(1).join(" "));
       break;
+    case "rmdir":
+      commands.rmdir(args.slice(1).join(" "));
+      break;
     default:
       if (cmd.length == 0) {
         process.stdout.write(
@@ -140,6 +143,20 @@ const commands = {
       outputData("");
     }
   },
+
+  rmdir: (foldername) => {
+    try {
+      fs.rmdir(path.join(path.dirname(""), foldername), (err) => {
+        if (err) return console.error(err);
+      });
+      console.log("Directory deleted successfully");
+      outputData("");
+    } catch (error) {
+      outputData("");
+    }
+  }
+
+
 };
 
 process.stdout.write(
