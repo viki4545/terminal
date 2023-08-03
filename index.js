@@ -1,8 +1,9 @@
 import readline from "readline";
 import fs from "fs";
 import os from "os";
-import { exec, spawn } from "child_process";
+import { exec, execFile, spawn } from "child_process";
 import path from "path";
+import { stderr, stdout } from "process";
 
 const outputData = (output) => {
   process.stdout.write(
@@ -18,6 +19,9 @@ const parseInput = (inputs) => {
     case "exit":
       commands.exit();
       break;
+    case "uptime":
+      commands.uptime();
+      break;
     case "cd":
       commands.cd(args.slice(1));
     case "pwd":
@@ -29,9 +33,6 @@ const parseInput = (inputs) => {
     case "cat":
       commands.cat(args.slice(1).join(" "));
       break;
-    case "nano":
-      commands.nano(args.slice(1).join(" "));
-      break;
     case "code":
       commands.code(args.slice(1).join(" "));
       break;
@@ -40,6 +41,9 @@ const parseInput = (inputs) => {
       break;
     case "rmdir":
       commands.rmdir(args.slice(1).join(" "));
+      break;
+    case "node": 
+      commands.node();
       break;
     default:
       if (cmd.length == 0) {
@@ -55,12 +59,18 @@ const commands = {
   exit: () => {
     process.exit(1);
   },
+  uptime: () => {
+    console.log(process.uptime());
+    outputData("");
+  },
   cd: (path) => {
     try {
       process.chdir(path[0]);
-      outputData("Directory changed");
+      console.log("Directory changed");
+      outputData("");
     } catch (err) {
-      outputData(err.msg);
+      console.log(err.message + "/n");
+      outputData("");
     }
   },
   pwd: () => {
@@ -154,8 +164,22 @@ const commands = {
     } catch (error) {
       outputData("");
     }
-  }
+  },
 
+  node: () => {
+    try {
+      execFile('node', ['--version'], (error, stdout, stderr) => {
+        if(error){
+          throw error;
+        }
+        console.log(stdout);
+        console.log("/n");
+        outputData("");
+      })
+    } catch (error) {
+      outputData("");
+    }
+  },
 
 };
 
@@ -163,13 +187,18 @@ process.stdout.write(
   `\x1b[30m\x1b[36m${process.cwd()} \x1b[32mTerminal> \x1b[0m`
 );
 
+process.on('uncaughtException', (err, origin) => {
+  fs.writeSync(process.stderr.fd, `\nCaught exception: ${err}\n` + `Exception origin: ${origin}`);
+  outputData("");
+});
+
 process.stdin.on("data", (args) => {
   args = args.toString().trim();
   parseInput(args);
 });
 
 process.on("SIGINT", function () {
-  console.log("\nKilling child process");
+  console.log(`\nKilling child process with process id: ${process.pid}`);
   outputData("");
 });
 
