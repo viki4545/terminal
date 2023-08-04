@@ -1,7 +1,7 @@
 import readline from "readline";
 import fs from "fs";
 import os from "os";
-import { exec, execFile, spawn } from "child_process";
+import { exec, execFile, spawn, fork } from "child_process";
 import path from "path";
 import { stderr, stdout } from "process";
 
@@ -45,6 +45,11 @@ const parseInput = (inputs) => {
     case "node": 
       commands.node();
       break;
+    case "nano": 
+      commands.nano(args.slice(1).join(" "));
+      break;
+    case "info":
+      commands.info(args.slice(1).join(" "));
     default:
       if (cmd.length == 0) {
         process.stdout.write(
@@ -66,15 +71,16 @@ const commands = {
   cd: (path) => {
     try {
       process.chdir(path[0]);
-      console.log("Directory changed");
+      console.log("Directory changed" + "/n");
       outputData("");
     } catch (err) {
-      console.log(err.message + "/n");
+      console.log(err.message);
       outputData("");
     }
   },
   pwd: () => {
-    outputData(process.cwd());
+    console.log(process.cwd());
+    outputData("");
   },
   ls: (folderPath) => {
     if (folderPath.length == 0) {
@@ -105,14 +111,14 @@ const commands = {
       outputData("");
     }
   },
-  // nano: (filename) => {
-  //   try {
-  //     fs.writeFileSync(filename);
-  //   } catch (err) {
-  //     console.log(`Got an error trying to write the file ${err.message}`);
-  //     outputData("");
-  //   }
-  // },
+  nano: (filename) => {
+    try {
+      fs.readFileSync(filename);
+    } catch (err) {
+      console.log(`Got an error trying to write the file ${err.message}`);
+      outputData("");
+    }
+  },
   code: (path) => {
     try {
       let vscodePath = "";
@@ -121,8 +127,8 @@ const commands = {
         command.stdout.on("data", (data) => {
           vscodePath = data.toString().trim();
           const code = spawn(vscodePath, [path]);
-          console.log(command.pid);
-          console.log(code.pid);
+          console.log(`\nParent process pid: ${command.pid}`);
+          console.log(`\nChild process pid: ${code.pid}`);
           outputData("");
         });
       }
@@ -173,13 +179,16 @@ const commands = {
           throw error;
         }
         console.log(stdout);
-        console.log("/n");
         outputData("");
       })
     } catch (error) {
       outputData("");
     }
   },
+  info: () => {
+    console.log(process.memoryUsage());
+    outputData("");
+  }
 
 };
 
