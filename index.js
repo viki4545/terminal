@@ -48,8 +48,12 @@ const parseInput = (inputs) => {
     case "nano": 
       commands.nano(args.slice(1).join(" "));
       break;
-    case "info":
-      commands.info(args.slice(1).join(" "));
+    case "grep":
+      commands.grep(args.slice(1), args.slice(2), args.slice(3));
+      break;
+    case "ps": 
+      commands.ps(args.slice(1), args.slice(2), args.slice(3), args.slice(4));
+      break;
     default:
       if (cmd.length == 0) {
         process.stdout.write(
@@ -85,6 +89,16 @@ const commands = {
   ls: (folderPath) => {
     if (folderPath.length == 0) {
       folderPath = process.cwd();
+    }
+    if(folderPath == "-l"){
+      exec(`ls ${folderPath}`, (error, stdout, stderr) => {
+        if(error){
+          console.error(`Error: ${error.message}`);
+          return
+        }
+        console.log(`Command output: \n${stdout}`);
+        outputData("");
+      });
     }
     fs.readdir(folderPath, (err, files) => {
       if (err) {
@@ -127,8 +141,8 @@ const commands = {
         command.stdout.on("data", (data) => {
           vscodePath = data.toString().trim();
           const code = spawn(vscodePath, [path]);
-          console.log(`\nParent process pid: ${command.pid}`);
-          console.log(`\nChild process pid: ${code.pid}`);
+          // console.log(`\nParent process pid: ${command.pid}`);
+          // console.log(`\nChild process pid: ${code.pid}`);
           outputData("");
         });
       }
@@ -137,8 +151,8 @@ const commands = {
         command.stdout.on("data", (data) => {
           vscodePath = data.toString().trim();
           const code = spawn(vscodePath, [path]);
-          console.log(command.pid);
-          console.log(code.pid);
+          // console.log(command.pid);
+          // console.log(code.pid);
           outputData("");
         });
       }
@@ -185,11 +199,39 @@ const commands = {
       outputData("");
     }
   },
-  info: () => {
-    console.log(process.memoryUsage());
-    outputData("");
-  }
 
+  grep: (options) => {
+    const childProcess = spawn('grep', [`${options[0]}`, `${options[1]}`, `${options[2]}`]);
+    childProcess.stdout.on("data", (data) => {
+      console.log(`\n${data}`);
+      outputData("");
+    })
+    childProcess.stderr.on('data', (data) => {
+      console.error(`\nError output:${data}`);
+      outputData("")
+    });
+    
+    childProcess.on('close', (code) => {
+      console.log(`\nCommand exited with code: ${code}`);
+      outputData("")
+    });
+  },
+
+  ps: (options) => {
+    const childProcess = spawn('ps', [`${options[0]}`, `${options[1]}`, `${options[2]}`, `${options[3]}`]);
+    childProcess.stdout.on("data", (data) => {
+      console.log(`\n${data}`);
+      outputData("");
+    })
+    childProcess.stderr.on('data', (data) => {
+      console.error(`\nError output:${data}`);
+    });
+    
+    childProcess.on('close', (code) => {
+      console.log(`\nCommand exited with code: ${code}`);
+      outputData("")
+    });
+  }
 };
 
 process.stdout.write(
