@@ -54,6 +54,9 @@ const parseInput = (inputs) => {
     case "ps": 
       commands.ps(args.slice(1), args.slice(2), args.slice(3), args.slice(4));
       break;
+    case "netstat":
+      commands.netstat();
+      break;
     default:
       if (cmd.length == 0) {
         process.stdout.write(
@@ -231,7 +234,19 @@ const commands = {
       console.log(`\nCommand exited with code: ${code}`);
       outputData("")
     });
+  },
+
+  netstat: () => {
+    exec('netstat', (error, stdout, stderr) => {
+      if(error){
+        console.error(`Error: ${error.message}`);
+        return
+      }
+      console.log(`Command output: \n${stdout}`);
+      outputData("");
+    })
   }
+
 };
 
 process.stdout.write(
