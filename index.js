@@ -57,6 +57,15 @@ const parseInput = (inputs) => {
     case "netstat":
       commands.netstat();
       break;
+    case "ping":
+      commands.ping(args.slice(1).join(" "));
+      break;
+    case "whoami":
+      commands.whoami();
+      break;
+    case "echo":
+      commands.echo(args.slice(1).join(" "));
+      break;
     default:
       if (cmd.length == 0) {
         process.stdout.write(
@@ -245,9 +254,61 @@ const commands = {
       console.log(`Command output: \n${stdout}`);
       outputData("");
     })
-  }
+  },
 
+  ping: (options) => {
+    const childProcess = spawn('ping', [options]);
+    childProcess.stdout.on("data", (data) => {
+      console.log(`${data}`);
+    })
+    childProcess.stderr.on('data', (data) => {
+      console.error(`\nError output:${data}`);
+      outputData("")
+    });
+    
+    childProcess.on('close', (code) => {
+      console.log(`\nCommand exited with code: ${code}`);
+      outputData("")
+    });
+  },
+
+  whoami: () => {
+    exec('whoami', (error, stdout, stderr) => {
+      if(error){
+        console.error(`\nError: ${error.message}`);
+        outputData("");
+        return;
+      }
+      if(stderr){
+        console.error(`\nError output: ${stderr}`);
+        outputData("");
+        return;
+      }
+      console.log(`\nCommand output: \n${stdout}`);
+      outputData("");
+    })
+  },
+
+  echo: (options) => {
+    const childProcess = spawn('echo', [`${options}`]);
+    childProcess.stdout.on("data", (data) => {
+      console.log(`\n${data}`);
+      outputData("");
+    });
+
+    childProcess.stderr.on("data", (data) => {
+      console.log(`\nError output: ${data}`);
+    });
+
+    childProcess.on("close", (code) => {
+      console.log(`\nCommand exited with code: ${code}`);
+      outputData("")
+    });
+  }                 
 };
+
+
+
 
 process.stdout.write(
   `\x1b[30m\x1b[36m${process.cwd()} \x1b[32mTerminal> \x1b[0m`
