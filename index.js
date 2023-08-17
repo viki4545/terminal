@@ -42,16 +42,16 @@ const parseInput = (inputs) => {
     case "rmdir":
       commands.rmdir(args.slice(1).join(" "));
       break;
-    case "node": 
+    case "node":
       commands.node();
       break;
-    case "nano": 
+    case "nano":
       commands.nano(args.slice(1).join(" "));
       break;
     case "grep":
       commands.grep(args.slice(1), args.slice(2), args.slice(3));
       break;
-    case "ps": 
+    case "ps":
       commands.ps(args.slice(1), args.slice(2), args.slice(3), args.slice(4));
       break;
     case "netstat":
@@ -65,6 +65,15 @@ const parseInput = (inputs) => {
       break;
     case "echo":
       commands.echo(args.slice(1).join(" "));
+      break;
+    case "tracert":
+      commands.tracert(args.slice(1).join(" "));
+      break;
+    case "find":
+      commands.find(args.slice(1), args.slice(2), args.slice(3));
+      break;
+    case "ipconfig":
+      commands.ipconfig();
       break;
     default:
       if (cmd.length == 0) {
@@ -102,11 +111,11 @@ const commands = {
     if (folderPath.length == 0) {
       folderPath = process.cwd();
     }
-    if(folderPath == "-l"){
+    if (folderPath == "-l") {
       exec(`ls ${folderPath}`, (error, stdout, stderr) => {
-        if(error){
+        if (error) {
           console.error(`Error: ${error.message}`);
-          return
+          return;
         }
         console.log(`Command output: \n${stdout}`);
         outputData("");
@@ -200,97 +209,106 @@ const commands = {
 
   node: () => {
     try {
-      execFile('node', ['--version'], (error, stdout, stderr) => {
-        if(error){
+      execFile("node", ["--version"], (error, stdout, stderr) => {
+        if (error) {
           throw error;
         }
         console.log(stdout);
         outputData("");
-      })
+      });
     } catch (error) {
       outputData("");
     }
   },
 
   grep: (options) => {
-    const childProcess = spawn('grep', [`${options[0]}`, `${options[1]}`, `${options[2]}`]);
+    const childProcess = spawn("grep", [
+      `${options[0]}`,
+      `${options[1]}`,
+      `${options[2]}`,
+    ]);
     childProcess.stdout.on("data", (data) => {
       console.log(`\n${data}`);
       outputData("");
-    })
-    childProcess.stderr.on('data', (data) => {
-      console.error(`\nError output:${data}`);
-      outputData("")
     });
-    
-    childProcess.on('close', (code) => {
+    childProcess.stderr.on("data", (data) => {
+      console.error(`\nError output:${data}`);
+      outputData("");
+    });
+
+    childProcess.on("close", (code) => {
       console.log(`\nCommand exited with code: ${code}`);
-      outputData("")
+      outputData("");
     });
   },
 
   ps: (options) => {
-    const childProcess = spawn('ps', [`${options[0]}`, `${options[1]}`, `${options[2]}`, `${options[3]}`]);
+    const childProcess = spawn("ps", [
+      `${options[0]}`,
+      `${options[1]}`,
+      `${options[2]}`,
+      `${options[3]}`,
+    ]);
     childProcess.stdout.on("data", (data) => {
       console.log(`\n${data}`);
       outputData("");
-    })
-    childProcess.stderr.on('data', (data) => {
+    });
+    childProcess.stderr.on("data", (data) => {
       console.error(`\nError output:${data}`);
     });
-    
-    childProcess.on('close', (code) => {
+
+    childProcess.on("close", (code) => {
       console.log(`\nCommand exited with code: ${code}`);
-      outputData("")
+      outputData("");
     });
   },
 
   netstat: () => {
-    exec('netstat', (error, stdout, stderr) => {
-      if(error){
+    exec("netstat", (error, stdout, stderr) => {
+      if (error) {
         console.error(`Error: ${error.message}`);
-        return
+        return;
       }
       console.log(`Command output: \n${stdout}`);
       outputData("");
-    })
+    });
   },
 
   ping: (options) => {
-    const childProcess = spawn('ping', [options]);
+    const childProcess = spawn("ping", [options]);
     childProcess.stdout.on("data", (data) => {
       console.log(`${data}`);
-    })
-    childProcess.stderr.on('data', (data) => {
-      console.error(`\nError output:${data}`);
-      outputData("")
     });
-    
-    childProcess.on('close', (code) => {
+    childProcess.stderr.on("data", (data) => {
+      console.error(`\nError output:${data}`);
+      outputData("");
+    });
+
+    childProcess.on("close", (code) => {
       console.log(`\nCommand exited with code: ${code}`);
-      outputData("")
+      outputData("");
     });
   },
 
   whoami: () => {
-    exec('whoami', (error, stdout, stderr) => {
-      if(error){
+    exec("whoami", (error, stdout, stderr) => {
+      if (error) {
         console.error(`\nError: ${error.message}`);
         outputData("");
         return;
       }
-      if(stderr){
+      if (stderr) {
         console.error(`\nError output: ${stderr}`);
         outputData("");
         return;
       }
       console.log(`\nCommand output: \n${stdout}`);
       outputData("");
-    })
+    });
   },
 
   echo: (options) => {
-    const childProcess = spawn('echo', [`${options}`]);
+    const childProcess = spawn("echo", [`${options}`]);
     childProcess.stdout.on("data", (data) => {
       console.log(`\n${data}`);
       outputData("");
@@ -299,23 +317,72 @@ const commands = {
     childProcess.stderr.on("data", (data) => {
       console.log(`\nError output: ${data}`);
     });
-
     childProcess.on("close", (code) => {
       console.log(`\nCommand exited with code: ${code}`);
-      outputData("")
+      outputData("");
     });
-  }                 
+  },
+
+  tracert: (options) => {
+    exec(`tracert ${options}`, (error, stdout, stderr) => {
+      if (error) {
+        console.error(`Error: ${error.message}`);
+        outputData("");
+      }
+
+      if (stderr) {
+        console.error(`Error output: ${stderr}`);
+        outputData("");
+      }
+
+      console.log(`Command output: \n${stdout}`);
+      outputData("");
+    });
+  },
+
+  find: (options) => {
+    exec(
+      `find ${options[0]} ${options[1]} ${options[2]}`,
+      (error, stdout, stderr) => {
+        if (error) {
+          console.error(`Error: ${error.message}`);
+          outputData("");
+        }
+        if (stderr) {
+          console.error(`Error output: ${stderr}`);
+          outputData("");
+        }
+        console.log(`Command Ouptput: \n${stdout}`);
+        outputData("");
+      }
+    );
+  },
+
+  ipconfig: () => {
+    exec("ipconfig", (error, stdout, stderr) => {
+      if (error) {
+        console.error(`\nError: ${error}`);
+        outputData("");
+      }
+      if (stderr) {
+        console.error(`\nError output: ${stderr}`);
+        outputData("");
+      }
+      console.log(`\nCommand Output: \n${stdout}`);
+      outputData("");
+    });
+  },
 };
-
-
-
 
 process.stdout.write(
   `\x1b[30m\x1b[36m${process.cwd()} \x1b[32mTerminal> \x1b[0m`
 );
 
-process.on('uncaughtException', (err, origin) => {
-  fs.writeSync(process.stderr.fd, `\nCaught exception: ${err}\n` + `Exception origin: ${origin}`);
+process.on("uncaughtException", (err, origin) => {
+  fs.writeSync(
+    process.stderr.fd,
+    `\nCaught exception: ${err}\n` + `Exception origin: ${origin}`
+  );
   outputData("");
 });
 
