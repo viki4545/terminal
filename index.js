@@ -75,6 +75,9 @@ const parseInput = (inputs) => {
     case "ipconfig":
       commands.ipconfig();
       break;
+    case "nslookup":
+      commands.nslookup();
+      break;
     default:
       if (cmd.length == 0) {
         process.stdout.write(
@@ -369,6 +372,21 @@ const commands = {
         outputData("");
       }
       console.log(`\nCommand Output: \n${stdout}`);
+      outputData("");
+    });
+  },
+
+  nslookup: () => {
+    exec("nslookup", (error, stdout, stderr) => {
+      if (error) {
+        console.error(`\nError: ${error}`);
+        outputData("");
+      }
+      if (stderr) {
+        console.error(`\nError output: ${stderr}`);
+        outputData("");
+      }
+      console.log(`\Command Output: ${stdout}`);
       outputData("");
     });
   },
